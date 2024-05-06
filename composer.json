@@ -20,7 +20,7 @@
   "extra": {
     "laravel": {
       "providers": [
-        "Diepxuan\\Providers\\DiepxuanServiceProvider"
+        "Diepxuan\\Providers\\ServiceProvider"
       ]
     }
   }
