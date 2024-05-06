@@ -18,6 +18,10 @@
     }
   },
   "extra": {
-    "laravel": {}
+    "laravel": {
+      "providers": [
+        "Diepxuan\\Providers\\DiepxuanServiceProvider"
+      ]
+    }
   }
 }
