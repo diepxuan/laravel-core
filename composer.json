@@ -1,0 +1,22 @@
+{
+  "name": "diepxuan/laravel-core",
+  "description": "Laravel core for DX System",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Tran Ngoc Duc",
+      "email": "ductn@diepxuan.com"
+    }
+  ],
+  "require": {
+  },
+  "autoload": {
+    "psr-4": {
+      "Diepxuan\\": "src/"
+    }
+  },
+  "extra": {
+    "laravel": {
+    }
+  }
+}
