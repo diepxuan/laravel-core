@@ -8,14 +8,14 @@ declare(strict_types=1);
  * @author     Tran Ngoc Duc <ductn@diepxuan.com>
  * @author     Tran Ngoc Duc <caothu91@gmail.com>
  *
- * @lastupdate 2024-05-06 17:52:44
+ * @lastupdate 2024-05-06 18:08:18
  */
 
 namespace Diepxuan\Providers;
 
+use Diepxuan\Http\Kernel;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
-use Modules\Installer\Http\Middleware\CanUpdate;
 
 class DiepxuanServiceProvider extends ServiceProvider
 {
@@ -120,8 +120,7 @@ class DiepxuanServiceProvider extends ServiceProvider
     protected function registerMiddlewares(): void
     {
         $kernel = new Kernel();
-        // dd($kernel);
-        app()->make('router')->aliasMiddleware('update', CanUpdate::class);
+        $kernel->load();
     }
 
     /**
