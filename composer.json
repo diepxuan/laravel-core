@@ -8,15 +8,16 @@
       "email": "ductn@diepxuan.com"
     }
   ],
-  "require": {
-  },
+  "require": {},
   "autoload": {
+    "files": [
+      "helpers.php"
+    ],
     "psr-4": {
       "Diepxuan\\": "src/"
     }
   },
   "extra": {
-    "laravel": {
-    }
+    "laravel": {}
   }
 }
