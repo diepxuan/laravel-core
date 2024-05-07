@@ -8,17 +8,15 @@ declare(strict_types=1);
  * @author     Tran Ngoc Duc <ductn@diepxuan.com>
  * @author     Tran Ngoc Duc <caothu91@gmail.com>
  *
- * @lastupdate 2024-05-07 10:01:47
+ * @lastupdate 2024-05-07 10:48:07
  */
 
 namespace Diepxuan\Providers;
 
-use Composer\InstalledVersions as ComposerPackage;
 use Diepxuan\Http\Kernel;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider as BaseServiceProvider;
-use Illuminate\Support\Str;
 
 class ServiceProvider extends BaseServiceProvider
 {
@@ -38,6 +36,8 @@ class ServiceProvider extends BaseServiceProvider
      */
     public function register(): void
     {
+        $this->app->register(RouteServiceProvider::class);
+
         $this->registerConfig()
             ->registerMiddlewares()
             ->registerCommands()
@@ -127,16 +127,9 @@ class ServiceProvider extends BaseServiceProvider
         if ($this->packages) {
             return $this->packages;
         }
+        $this->packages = module_packages();
 
-        return Collection::wrap(ComposerPackage::getInstalledPackages())
-            ->where(static fn (string $package) => Str::of($package)
-                ->startsWith('diepxuan'))
-            ->where(static fn (string $package) => !Str::of($package)
-                ->is(ComposerPackage::getRootPackage()['name']))
-            ->mapWithKeys(static fn (string $package, int $key) => [
-                Str::of($package)->afterLast('/')->after('-')->toString() => $package,
-            ])
-        ;
+        return $this->packages;
     }
 
     /**
