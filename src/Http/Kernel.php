@@ -8,7 +8,7 @@ declare(strict_types=1);
  * @author     Tran Ngoc Duc <ductn@diepxuan.com>
  * @author     Tran Ngoc Duc <caothu91@gmail.com>
  *
- * @lastupdate 2024-05-06 18:11:31
+ * @lastupdate 2024-05-07 09:31:23
  */
 
 namespace Diepxuan\Http;
@@ -52,6 +52,14 @@ class Kernel
     protected $middlewareAliases = [
         'clearcache' => ClearCache::class,
     ];
+
+    /**
+     * Construct.
+     */
+    public function __construct()
+    {
+        $this->load();
+    }
 
     /**
      * Load middlewares.

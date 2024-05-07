@@ -8,7 +8,7 @@ declare(strict_types=1);
  * @author     Tran Ngoc Duc <ductn@diepxuan.com>
  * @author     Tran Ngoc Duc <caothu91@gmail.com>
  *
- * @lastupdate 2024-05-07 09:09:26
+ * @lastupdate 2024-05-07 10:01:47
  */
 
 namespace Diepxuan\Providers;
@@ -28,7 +28,9 @@ class ServiceProvider extends BaseServiceProvider
      * Bootstrap the application services.
      */
     public function boot(): void
-    {// @todo
+    {
+        // @todo
+        // dd(Diepxuan::test());
     }
 
     /**
@@ -36,8 +38,6 @@ class ServiceProvider extends BaseServiceProvider
      */
     public function register(): void
     {
-        // dd($this->packages()->all());
-
         $this->registerConfig()
             ->registerMiddlewares()
             ->registerCommands()
@@ -183,8 +183,7 @@ class ServiceProvider extends BaseServiceProvider
      */
     protected function registerMiddlewares()
     {
-        $kernel = new Kernel();
-        $kernel->load();
+        new Kernel();
 
         return $this;
     }
