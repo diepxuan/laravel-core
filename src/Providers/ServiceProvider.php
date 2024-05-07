@@ -8,7 +8,7 @@ declare(strict_types=1);
  * @author     Tran Ngoc Duc <ductn@diepxuan.com>
  * @author     Tran Ngoc Duc <caothu91@gmail.com>
  *
- * @lastupdate 2024-05-06 23:00:30
+ * @lastupdate 2024-05-07 09:09:26
  */
 
 namespace Diepxuan\Providers;
@@ -22,15 +22,13 @@ use Illuminate\Support\Str;
 
 class ServiceProvider extends BaseServiceProvider
 {
-    protected string $moduleName      = 'diepxuan/laravel-core';
-    protected string $moduleNameLower = 'core';
+    protected $packages;
 
     /**
      * Bootstrap the application services.
      */
     public function boot(): void
-    {
-        $this->loadMigrationsFrom(module_path($this->moduleName, 'database/migrations'));
+    {// @todo
     }
 
     /**
@@ -38,7 +36,7 @@ class ServiceProvider extends BaseServiceProvider
      */
     public function register(): void
     {
-        dd($this->packages());
+        // dd($this->packages()->all());
 
         $this->registerConfig()
             ->registerMiddlewares()
@@ -46,6 +44,7 @@ class ServiceProvider extends BaseServiceProvider
             ->registerCommandSchedules()
             ->registerViews()
             ->registerTranslations()
+            ->registerMigrations()
         ;
     }
 
@@ -60,19 +59,39 @@ class ServiceProvider extends BaseServiceProvider
     }
 
     /**
+     * registerMigrations.
+     */
+    protected function registerMigrations()
+    {
+        $self = $this;
+        $this->packages()->map(static function (string $package, string $code) use (&$self) {
+            $self->loadMigrationsFrom(module_path($package, 'database/migrations'));
+
+            return $package;
+        });
+
+        return $this;
+    }
+
+    /**
      * Register translations.
      */
     protected function registerTranslations()
     {
-        $langPath = resource_path('lang/modules/' . $this->moduleNameLower);
+        $self = $this;
+        $this->packages()->map(static function (string $package, string $code) use (&$self) {
+            $langPath = resource_path('lang/modules/' . $code);
 
-        if (is_dir($langPath)) {
-            $this->loadTranslationsFrom($langPath, $this->moduleNameLower);
-            $this->loadJsonTranslationsFrom($langPath);
-        } else {
-            $this->loadTranslationsFrom(module_path($this->moduleName, 'lang'), $this->moduleNameLower);
-            $this->loadJsonTranslationsFrom(module_path($this->moduleName, 'lang'));
-        }
+            if (is_dir($langPath)) {
+                $self->loadTranslationsFrom($langPath, $code);
+                $self->loadJsonTranslationsFrom($langPath);
+            } else {
+                $self->loadTranslationsFrom(module_path($package, 'lang'), $code);
+                $self->loadJsonTranslationsFrom(module_path($package, 'lang'));
+            }
+
+            return $package;
+        });
 
         return $this;
     }
@@ -82,27 +101,41 @@ class ServiceProvider extends BaseServiceProvider
      */
     protected function registerViews()
     {
-        $viewPath   = resource_path('views/modules/' . $this->moduleNameLower);
-        $sourcePath = module_path($this->moduleName, 'resources/views');
+        $self = $this;
+        $this->packages()->map(static function (string $package, string $code) use (&$self) {
+            $viewPath   = resource_path('views/modules/' . $code);
+            $sourcePath = module_path($package, 'resources/views');
 
-        $this->publishes([$sourcePath => $viewPath], ['views', $this->moduleNameLower . '-module-views']);
+            $self->publishes([$sourcePath => $viewPath], ['views', $code . '-module-views']);
 
-        $this->loadViewsFrom(array_merge($this->getPublishableViewPaths(), [$sourcePath]), $this->moduleNameLower);
+            $self->loadViewsFrom(array_merge($self->getPublishableViewPaths($code), [$sourcePath]), $code);
 
-        $componentNamespace = str_replace('/', '\\', $this->moduleName);
-        Blade::componentNamespace($componentNamespace, $this->moduleNameLower);
+            $componentNamespace = str_replace('/', '\\', $package);
+            Blade::componentNamespace($componentNamespace, $code);
+
+            return $package;
+        });
 
         return $this;
     }
 
-    protected function packages(): array
+    /**
+     * List packages.
+     */
+    protected function packages(): Collection
     {
+        if ($this->packages) {
+            return $this->packages;
+        }
+
         return Collection::wrap(ComposerPackage::getInstalledPackages())
-            ->where(static fn (string $value) => Str::of($value)
+            ->where(static fn (string $package) => Str::of($package)
                 ->startsWith('diepxuan'))
-            ->where(static fn (string $value) => !Str::of($value)
+            ->where(static fn (string $package) => !Str::of($package)
                 ->is(ComposerPackage::getRootPackage()['name']))
-            ->all()
+            ->mapWithKeys(static fn (string $package, int $key) => [
+                Str::of($package)->afterLast('/')->after('-')->toString() => $package,
+            ])
         ;
     }
 
@@ -111,8 +144,13 @@ class ServiceProvider extends BaseServiceProvider
      */
     protected function registerConfig()
     {
-        $this->publishes([module_path($this->moduleName, 'config/config.php') => config_path($this->moduleNameLower . '.php')], 'config');
-        $this->mergeConfigFrom(module_path($this->moduleName, 'config/config.php'), $this->moduleNameLower);
+        $self = $this;
+        $this->packages()->map(static function (string $package, string $code) use (&$self) {
+            $self->publishes([module_path($package, 'config/config.php') => config_path($code . '.php')], 'config');
+            $self->mergeConfigFrom(module_path($package, 'config/config.php'), $code);
+
+            return $package;
+        });
 
         return $this;
     }
@@ -122,7 +160,7 @@ class ServiceProvider extends BaseServiceProvider
      */
     protected function registerCommands()
     {
-        // $this->commands([]);
+        $this->commands([]);
 
         return $this;
     }
@@ -152,14 +190,17 @@ class ServiceProvider extends BaseServiceProvider
     }
 
     /**
+     * @param mixed $moduleCode
+     *
      * @return array<string>
      */
-    private function getPublishableViewPaths(): array
+    private function getPublishableViewPaths($moduleCode = ''): array
     {
-        $paths = [];
+        $paths      = [];
+        $moduleCode = "/{$moduleCode}";
         foreach (config('view.paths') as $path) {
-            if (is_dir($path . '/diepxuan/' . $this->moduleNameLower)) {
-                $paths[] = $path . '/diepxuan/' . $this->moduleNameLower;
+            if (is_dir("{$path}/diepxuan{$moduleCode}")) {
+                $paths[] = "{$path}/diepxuan{$moduleCode}";
             }
         }
 
