@@ -8,7 +8,7 @@ declare(strict_types=1);
  * @author     Tran Ngoc Duc <ductn@diepxuan.com>
  * @author     Tran Ngoc Duc <caothu91@gmail.com>
  *
- * @lastupdate 2024-05-07 10:48:07
+ * @lastupdate 2024-05-09 11:50:28
  */
 
 namespace Diepxuan\Providers;
@@ -139,8 +139,10 @@ class ServiceProvider extends BaseServiceProvider
     {
         $self = $this;
         $this->packages()->map(static function (string $package, string $code) use (&$self) {
-            $self->publishes([module_path($package, 'config/config.php') => config_path($code . '.php')], 'config');
-            $self->mergeConfigFrom(module_path($package, 'config/config.php'), $code);
+            if ((new \SplFileInfo(module_path($package, '/config/config.php')))->isFile()) {
+                $self->publishes([module_path($package, 'config/config.php') => config_path($code . '.php')], 'config');
+                $self->mergeConfigFrom(module_path($package, 'config/config.php'), $code);
+            }
 
             return $package;
         });
