@@ -8,7 +8,9 @@
       "email": "ductn@diepxuan.com"
     }
   ],
-  "require": {},
+  "require": {
+    "illuminate/support": "^10.0"
+  },
   "autoload": {
     "files": [
       "helpers.php"
