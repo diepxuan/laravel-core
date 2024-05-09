@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 use Composer\InstalledVersions as ComposerPackage;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 if (!function_exists('module_path')) {
     function module_path($package_name, $path = null)
