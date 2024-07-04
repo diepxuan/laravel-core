@@ -12,9 +12,6 @@
     "illuminate/support": "^10.0"
   },
   "autoload": {
-    "files": [
-      "helpers.php"
-    ],
     "psr-4": {
       "Diepxuan\\Core\\": "src/"
     }

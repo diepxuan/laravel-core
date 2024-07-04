@@ -8,11 +8,12 @@ declare(strict_types=1);
  * @author     Tran Ngoc Duc <ductn@diepxuan.com>
  * @author     Tran Ngoc Duc <caothu91@gmail.com>
  *
- * @lastupdate 2024-07-04 09:26:17
+ * @lastupdate 2024-07-04 21:56:08
  */
 
 namespace Diepxuan\Core\Providers;
 
+use Diepxuan\Core\Models\Package;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route;
@@ -36,16 +37,13 @@ class RouteServiceProvider extends ServiceProvider
      */
     public function map(): void
     {
-        $self = $this;
-        $this->packages()->map(static function (string $package, string $code) use (&$self) {
-            // Route::prefix($code)->group(static function () use ($package): void {
-            if ((new \SplFileInfo(module_path($package, '/routes/web.php')))->isFile()) {
-                Route::middleware('web')->group(module_path($package, '/routes/web.php'));
+        $this->packages()->map(static function (string $package, string $code) {
+            if ((new \SplFileInfo(Package::path($package, '/routes/web.php')))->isFile()) {
+                Route::middleware('web')->group(Package::path($package, '/routes/web.php'));
             }
-            if ((new \SplFileInfo(module_path($package, '/routes/api.php')))->isFile()) {
-                Route::middleware('api')->group(module_path($package, '/routes/api.php'));
+            if ((new \SplFileInfo(Package::path($package, '/routes/api.php')))->isFile()) {
+                Route::middleware('api')->group(Package::path($package, '/routes/api.php'));
             }
-            // });
 
             return $package;
         });
@@ -59,7 +57,7 @@ class RouteServiceProvider extends ServiceProvider
         if ($this->packages) {
             return $this->packages;
         }
-        $this->packages = module_packages();
+        $this->packages = Package::list();
 
         return $this->packages;
     }

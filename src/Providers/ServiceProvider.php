@@ -8,12 +8,13 @@ declare(strict_types=1);
  * @author     Tran Ngoc Duc <ductn@diepxuan.com>
  * @author     Tran Ngoc Duc <caothu91@gmail.com>
  *
- * @lastupdate 2024-07-04 16:39:29
+ * @lastupdate 2024-07-04 22:01:52
  */
 
 namespace Diepxuan\Core\Providers;
 
 use Diepxuan\Core\Http\Kernel;
+use Diepxuan\Core\Models\Package;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider as BaseServiceProvider;
@@ -36,6 +37,7 @@ class ServiceProvider extends BaseServiceProvider
      */
     public function register(): void
     {
+        $this->app->singleton(Package::class, static fn () => new Package());
         $this->app->register(RouteServiceProvider::class);
 
         $this->registerConfig()
@@ -65,7 +67,7 @@ class ServiceProvider extends BaseServiceProvider
     {
         $self = $this;
         $this->packages()->map(static function (string $package, string $code) use (&$self) {
-            $self->loadMigrationsFrom(module_path($package, 'database/migrations'));
+            $self->loadMigrationsFrom(Package::path($package, 'database/migrations'));
 
             return $package;
         });
@@ -86,8 +88,8 @@ class ServiceProvider extends BaseServiceProvider
                 $self->loadTranslationsFrom($langPath, $code);
                 $self->loadJsonTranslationsFrom($langPath);
             } else {
-                $self->loadTranslationsFrom(module_path($package, 'lang'), $code);
-                $self->loadJsonTranslationsFrom(module_path($package, 'lang'));
+                $self->loadTranslationsFrom(Package::path($package, 'lang'), $code);
+                $self->loadJsonTranslationsFrom(Package::path($package, 'lang'));
             }
 
             return $package;
@@ -104,7 +106,7 @@ class ServiceProvider extends BaseServiceProvider
         $self = $this;
         $this->packages()->map(static function (string $package, string $code) use (&$self) {
             $viewPath   = resource_path('views/modules/' . $code);
-            $sourcePath = module_path($package, 'resources/views');
+            $sourcePath = Package::path($package, 'resources/views');
 
             $self->publishes([$sourcePath => $viewPath], ['views', $code . '-module-views']);
 
@@ -127,7 +129,7 @@ class ServiceProvider extends BaseServiceProvider
         if ($this->packages) {
             return $this->packages;
         }
-        $this->packages = module_packages();
+        $this->packages = Package::list();
 
         return $this->packages;
     }
@@ -138,9 +140,9 @@ class ServiceProvider extends BaseServiceProvider
     protected function registerConfig()
     {
         $this->packages()->map(function (string $package, string $code) {
-            if ((new \SplFileInfo(module_path($package, '/config/config.php')))->isFile()) {
-                $this->publishes([module_path($package, 'config/config.php') => config_path($code . '.php')], 'config');
-                $this->mergeConfigFrom(module_path($package, 'config/config.php'), $code);
+            if ((new \SplFileInfo(Package::path($package, '/config/config.php')))->isFile()) {
+                $this->publishes([Package::path($package, 'config/config.php') => config_path($code . '.php')], 'config');
+                $this->mergeConfigFrom(Package::path($package, 'config/config.php'), $code);
             }
 
             return $package;
