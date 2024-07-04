@@ -8,15 +8,13 @@ declare(strict_types=1);
  * @author     Tran Ngoc Duc <ductn@diepxuan.com>
  * @author     Tran Ngoc Duc <caothu91@gmail.com>
  *
- * @lastupdate 2024-07-04 22:01:52
+ * @lastupdate 2024-07-04 23:05:59
  */
 
 namespace Diepxuan\Core\Providers;
 
-use Diepxuan\Core\Http\Kernel;
 use Diepxuan\Core\Models\Package;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider as BaseServiceProvider;
 
 class ServiceProvider extends BaseServiceProvider
@@ -39,14 +37,15 @@ class ServiceProvider extends BaseServiceProvider
     {
         $this->app->singleton(Package::class, static fn () => new Package());
         $this->app->register(RouteServiceProvider::class);
+        $this->app->register(MigrationServiceProvider::class);
+        $this->app->register(TranslationServiceProvider::class);
+        $this->app->register(ViewServiceProvider::class);
+        $this->app->register(ConfigServiceProvider::class);
+        $this->app->register(MiddlewareServiceProvider::class);
+        $this->app->register(RegisterServiceProvider::class);
 
-        $this->registerConfig()
-            ->registerMiddlewares()
-            ->registerCommands()
+        $this->registerCommands()
             ->registerCommandSchedules()
-            ->registerViews()
-            ->registerTranslations()
-            ->registerMigrations()
         ;
     }
 
@@ -61,67 +60,6 @@ class ServiceProvider extends BaseServiceProvider
     }
 
     /**
-     * registerMigrations.
-     */
-    protected function registerMigrations()
-    {
-        $self = $this;
-        $this->packages()->map(static function (string $package, string $code) use (&$self) {
-            $self->loadMigrationsFrom(Package::path($package, 'database/migrations'));
-
-            return $package;
-        });
-
-        return $this;
-    }
-
-    /**
-     * Register translations.
-     */
-    protected function registerTranslations()
-    {
-        $self = $this;
-        $this->packages()->map(static function (string $package, string $code) use (&$self) {
-            $langPath = resource_path('lang/modules/' . $code);
-
-            if (is_dir($langPath)) {
-                $self->loadTranslationsFrom($langPath, $code);
-                $self->loadJsonTranslationsFrom($langPath);
-            } else {
-                $self->loadTranslationsFrom(Package::path($package, 'lang'), $code);
-                $self->loadJsonTranslationsFrom(Package::path($package, 'lang'));
-            }
-
-            return $package;
-        });
-
-        return $this;
-    }
-
-    /**
-     * Register views.
-     */
-    protected function registerViews()
-    {
-        $self = $this;
-        $this->packages()->map(static function (string $package, string $code) use (&$self) {
-            $viewPath   = resource_path('views/modules/' . $code);
-            $sourcePath = Package::path($package, 'resources/views');
-
-            $self->publishes([$sourcePath => $viewPath], ['views', $code . '-module-views']);
-
-            $self->loadViewsFrom(array_merge($self->getPublishableViewPaths($code), [$sourcePath]), $code);
-
-            $componentNamespace = str_replace('/', '\\', $package);
-            Blade::componentNamespace($componentNamespace, $code);
-
-            return $package;
-        });
-
-        return $this;
-    }
-
-    /**
      * List packages.
      */
     protected function packages(): Collection
@@ -132,23 +70,6 @@ class ServiceProvider extends BaseServiceProvider
         $this->packages = Package::list();
 
         return $this->packages;
-    }
-
-    /**
-     * Register config.
-     */
-    protected function registerConfig()
-    {
-        $this->packages()->map(function (string $package, string $code) {
-            if ((new \SplFileInfo(Package::path($package, '/config/config.php')))->isFile()) {
-                $this->publishes([Package::path($package, 'config/config.php') => config_path($code . '.php')], 'config');
-                $this->mergeConfigFrom(Package::path($package, 'config/config.php'), $code);
-            }
-
-            return $package;
-        });
-
-        return $this;
     }
 
     /**
@@ -172,33 +93,5 @@ class ServiceProvider extends BaseServiceProvider
         // });
 
         return $this;
-    }
-
-    /**
-     * Register Middlewares.
-     */
-    protected function registerMiddlewares()
-    {
-        new Kernel();
-
-        return $this;
-    }
-
-    /**
-     * @param mixed $moduleCode
-     *
-     * @return array<string>
-     */
-    private function getPublishableViewPaths($moduleCode = ''): array
-    {
-        $paths      = [];
-        $moduleCode = "/{$moduleCode}";
-        foreach (config('view.paths') as $path) {
-            if (is_dir("{$path}/diepxuan{$moduleCode}")) {
-                $paths[] = "{$path}/diepxuan{$moduleCode}";
-            }
-        }
-
-        return $paths;
     }
 }
