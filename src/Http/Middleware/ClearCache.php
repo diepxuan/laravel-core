@@ -8,10 +8,10 @@ declare(strict_types=1);
  * @author     Tran Ngoc Duc <ductn@diepxuan.com>
  * @author     Tran Ngoc Duc <caothu91@gmail.com>
  *
- * @lastupdate 2024-05-06 17:04:02
+ * @lastupdate 2024-07-04 09:25:57
  */
 
-namespace Diepxuan\Http\Middleware;
+namespace Diepxuan\Core\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;

@@ -8,10 +8,10 @@ declare(strict_types=1);
  * @author     Tran Ngoc Duc <ductn@diepxuan.com>
  * @author     Tran Ngoc Duc <caothu91@gmail.com>
  *
- * @lastupdate 2024-05-07 10:59:16
+ * @lastupdate 2024-07-04 09:26:17
  */
 
-namespace Diepxuan\Providers;
+namespace Diepxuan\Core\Providers;
 
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use Illuminate\Support\Collection;

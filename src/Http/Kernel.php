@@ -8,12 +8,12 @@ declare(strict_types=1);
  * @author     Tran Ngoc Duc <ductn@diepxuan.com>
  * @author     Tran Ngoc Duc <caothu91@gmail.com>
  *
- * @lastupdate 2024-05-07 09:31:23
+ * @lastupdate 2024-07-04 09:25:50
  */
 
-namespace Diepxuan\Http;
+namespace Diepxuan\Core\Http;
 
-use Diepxuan\Http\Middleware\ClearCache;
+use Diepxuan\Core\Http\Middleware\ClearCache;
 
 class Kernel
 {

@@ -16,13 +16,13 @@
       "helpers.php"
     ],
     "psr-4": {
-      "Diepxuan\\": "src/"
+      "Diepxuan\\Core\\": "src/"
     }
   },
   "extra": {
     "laravel": {
       "providers": [
-        "Diepxuan\\Providers\\ServiceProvider"
+        "Diepxuan\\Core\\Providers\\ServiceProvider"
       ]
     }
   }

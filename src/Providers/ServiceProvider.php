@@ -8,12 +8,12 @@ declare(strict_types=1);
  * @author     Tran Ngoc Duc <ductn@diepxuan.com>
  * @author     Tran Ngoc Duc <caothu91@gmail.com>
  *
- * @lastupdate 2024-05-09 11:50:28
+ * @lastupdate 2024-07-04 16:39:29
  */
 
-namespace Diepxuan\Providers;
+namespace Diepxuan\Core\Providers;
 
-use Diepxuan\Http\Kernel;
+use Diepxuan\Core\Http\Kernel;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider as BaseServiceProvider;
@@ -137,11 +137,10 @@ class ServiceProvider extends BaseServiceProvider
      */
     protected function registerConfig()
     {
-        $self = $this;
-        $this->packages()->map(static function (string $package, string $code) use (&$self) {
+        $this->packages()->map(function (string $package, string $code) {
             if ((new \SplFileInfo(module_path($package, '/config/config.php')))->isFile()) {
-                $self->publishes([module_path($package, 'config/config.php') => config_path($code . '.php')], 'config');
-                $self->mergeConfigFrom(module_path($package, 'config/config.php'), $code);
+                $this->publishes([module_path($package, 'config/config.php') => config_path($code . '.php')], 'config');
+                $this->mergeConfigFrom(module_path($package, 'config/config.php'), $code);
             }
 
             return $package;
