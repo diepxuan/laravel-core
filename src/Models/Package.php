@@ -8,7 +8,7 @@ declare(strict_types=1);
  * @author     Tran Ngoc Duc <ductn@diepxuan.com>
  * @author     Tran Ngoc Duc <caothu91@gmail.com>
  *
- * @lastupdate 2024-07-04 21:53:35
+ * @lastupdate 2024-07-09 13:33:26
  */
 
 namespace Diepxuan\Core\Models;
@@ -41,7 +41,7 @@ class Package
      * @param mixed $package_name
      * @param mixed $path
      */
-    public static function path($package_name, $path = null)
+    public static function path($package_name, $path = null): string
     {
         $packagePath = ComposerPackage::getInstallPath($package_name);
         $packagePath = $packagePath ?: base_path($package_name);
