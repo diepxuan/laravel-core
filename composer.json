@@ -8,9 +8,6 @@
       "email": "ductn@diepxuan.com"
     }
   ],
-  "require": {
-    "illuminate/support": "^10.0"
-  },
   "autoload": {
     "psr-4": {
       "Diepxuan\\Core\\": "src/"
