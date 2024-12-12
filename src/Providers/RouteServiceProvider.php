@@ -8,7 +8,7 @@ declare(strict_types=1);
  * @author     Tran Ngoc Duc <ductn@diepxuan.com>
  * @author     Tran Ngoc Duc <caothu91@gmail.com>
  *
- * @lastupdate 2024-07-04 22:22:47
+ * @lastupdate 2024-12-12 00:14:00
  */
 
 namespace Diepxuan\Core\Providers;
@@ -35,11 +35,24 @@ class RouteServiceProvider extends ServiceProvider
     public function map(): void
     {
         Package::list()->map(static function (string $package, string $code) {
-            if ((new \SplFileInfo(Package::path($package, '/routes/web.php')))->isFile()) {
-                Route::middleware('web')->group(Package::path($package, '/routes/web.php'));
+            if ((new \SplFileInfo($file = Package::path($package, '/routes/web.php')))->isFile()) {
+                Route::middleware('web')->group($file);
             }
-            if ((new \SplFileInfo(Package::path($package, '/routes/api.php')))->isFile()) {
-                Route::middleware('api')->group(Package::path($package, '/routes/api.php'));
+            if ((new \SplFileInfo($file = Package::path($package, '/routes/api.php')))->isFile()) {
+                Route::middleware('api')->group($file);
+            }
+
+            // Lấy tất cả các file phù hợp với pattern
+            $files = glob(Package::path($package, '/routes/*.php'));
+
+            // Loại bỏ các file không mong muốn
+            $files = array_filter($files, static fn ($file) => !\in_array(basename($file), ['web.php', 'api.php'], true));
+
+            // Duyệt qua các file còn lại
+            foreach ($files as $file) {
+                if ((new \SplFileInfo($file))->isFile()) {
+                    Route::middleware('web')->group($file);
+                }
             }
 
             return $package;
