@@ -8,7 +8,7 @@ declare(strict_types=1);
  * @author     Tran Ngoc Duc <ductn@diepxuan.com>
  * @author     Tran Ngoc Duc <caothu91@gmail.com>
  *
- * @lastupdate 2024-07-04 22:36:02
+ * @lastupdate 2024-12-12 22:21:41
  */
 
 namespace Diepxuan\Core\Providers;
@@ -42,8 +42,8 @@ class ViewServiceProvider extends ServiceProvider
 
             $this->loadViewsFrom(array_merge($this->getPublishableViewPaths($code), [$sourcePath]), $code);
 
-            $componentNamespace = str_replace('/', '\\', $package);
-            Blade::componentNamespace($componentNamespace, $code);
+            $componentNamespace = config("{$code}.namespace");
+            Blade::componentNamespace("{$componentNamespace}\\View\\Components", $code);
         });
     }
 

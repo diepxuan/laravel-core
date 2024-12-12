@@ -8,7 +8,7 @@ declare(strict_types=1);
  * @author     Tran Ngoc Duc <ductn@diepxuan.com>
  * @author     Tran Ngoc Duc <caothu91@gmail.com>
  *
- * @lastupdate 2024-07-04 23:05:59
+ * @lastupdate 2024-12-12 22:16:38
  */
 
 namespace Diepxuan\Core\Providers;
@@ -36,11 +36,11 @@ class ServiceProvider extends BaseServiceProvider
     public function register(): void
     {
         $this->app->singleton(Package::class, static fn () => new Package());
+        $this->app->register(ConfigServiceProvider::class);
         $this->app->register(RouteServiceProvider::class);
         $this->app->register(MigrationServiceProvider::class);
         $this->app->register(TranslationServiceProvider::class);
         $this->app->register(ViewServiceProvider::class);
-        $this->app->register(ConfigServiceProvider::class);
         $this->app->register(MiddlewareServiceProvider::class);
         $this->app->register(RegisterServiceProvider::class);
 
