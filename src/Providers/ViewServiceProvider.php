@@ -8,7 +8,7 @@ declare(strict_types=1);
  * @author     Tran Ngoc Duc <ductn@diepxuan.com>
  * @author     Tran Ngoc Duc <caothu91@gmail.com>
  *
- * @lastupdate 2024-12-12 22:21:41
+ * @lastupdate 2024-12-13 09:08:30
  */
 
 namespace Diepxuan\Core\Providers;
@@ -26,7 +26,9 @@ class ViewServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // parent::boot();
+        Package::list()->map(static function (string $package, string $code): void {
+            Package::livewireComponentNamespace($code);
+        });
     }
 
     /**
