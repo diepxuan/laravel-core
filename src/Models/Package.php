@@ -8,7 +8,7 @@ declare(strict_types=1);
  * @author     Tran Ngoc Duc <ductn@diepxuan.com>
  * @author     Tran Ngoc Duc <caothu91@gmail.com>
  *
- * @lastupdate 2024-12-13 08:39:57
+ * @lastupdate 2024-12-13 13:46:14
  */
 
 namespace Diepxuan\Core\Models;
@@ -37,6 +37,26 @@ class Package
     }
 
     /**
+     * source.
+     *
+     * @param mixed      $package_name
+     * @param null|mixed $path
+     */
+    public static function source($package_name, $path = null): string
+    {
+        $packagePath = self::path($package_name, '/src');
+        if ($path) {
+            $path        = explode(\DIRECTORY_SEPARATOR, trim($path, \DIRECTORY_SEPARATOR));
+            $packagePath = explode(\DIRECTORY_SEPARATOR, $packagePath);
+            $packagePath = array_merge($packagePath, $path);
+
+            return implode(\DIRECTORY_SEPARATOR, $packagePath);
+        }
+
+        return $packagePath;
+    }
+
+    /**
      * path.
      *
      * @param mixed $package_name
@@ -60,60 +80,112 @@ class Package
         return $packagePath->getRealPath();
     }
 
+    /**
+     * livewireComponentNamespace.
+     *
+     * @param mixed $package
+     */
     public static function livewireComponentNamespace($package): void
     {
         $namespace          = config("{$package}.namespace");
+        $package_name       = config("{$package}.name");
         $componentNamespace = "{$namespace}\\Http\\Livewire";
-        // dd(Livewire::componentNamespace("{$componentNamespace}\\Http\\Livewire", $code));
 
-        // $allClasses       = get_declared_classes();
-        // $namespaceClasses = array_filter($allClasses, static fn ($class) => Str::startsWith($class, $componentNamespace));
-
-        // Package::getClassesInNamespace($componentNamespace);
-        foreach (self::getClassesInNamespace("{$componentNamespace}") as $component) {
-            $componentName = Str::kebab(class_basename($component));
-            Livewire::component("{$package}::{$componentName}", $component);
-        }
-
-        // $classmap = require base_path('vendor/composer/autoload_classmap.php');
-
-        // $classes = array_keys(array_filter($classmap, static fn ($path, $class) => str_starts_with($class, $componentNamespace), ARRAY_FILTER_USE_BOTH));
-
-        // dd($componentNamespace, $classes);
-        // Livewire::componentNamespace("{$componentNamespace}\\Http\\Livewire", $code);
+        self::getClassesInNamespace("{$namespace}\\Http\\Livewire")
+            ->map(static function (string $component) use ($package): void {
+                $componentName = Str::kebab(class_basename($component));
+                Livewire::component("{$package}::{$componentName}", $component);
+            })
+        ;
+        self::getClassesInDirectory($package_name, '/Http/Livewire')
+            ->map(static function (string $component) use ($package): void {
+                $componentName = Str::kebab(class_basename($component));
+                Livewire::component("{$package}::{$componentName}", $component);
+            })
+        ;
     }
 
+    /**
+     * getClassesInDirectory.
+     *
+     * @param mixed $package_name
+     * @param mixed $path
+     */
+    public static function getClassesInDirectory($package_name, $path)
+    {
+        if (empty($package_name)) {
+            return Collection::wrap([]);
+        }
+        $path = self::source($package_name, $path);
+        if (!is_dir($path)) {
+            return Collection::wrap([]);
+        }
+
+        return Collection::wrap(glob($path . '/*.php'))
+            ->map(static fn (string $file): \SplFileInfo => new \SplFileInfo($file))
+            ->filter(static fn (\SplFileInfo $file) => $file->isFile())
+            ->map(static fn (\SplFileInfo $file) => self::getClassesInFile($file->getRealPath()))
+            ->flatten()
+        ;
+    }
+
+    /**
+     * getClassesInFile.
+     *
+     * @param mixed $filePath
+     */
+    public static function getClassesInFile($filePath)
+    {
+        $classes = [];
+        if (!file_exists($filePath)) {
+            return $classes;
+        }
+
+        $content     = file_get_contents($filePath);
+        $tokens      = token_get_all($content);
+        $namespace   = '';
+        $class       = '';
+        $isNamespace = false;
+
+        foreach ($tokens as $token) {
+            if ($isNamespace && \is_array($token)) {
+                $namespace .= $token[1];
+            }
+
+            if (T_NAMESPACE === $token[0]) {
+                $namespace   = '';
+                $isNamespace = true;
+            } elseif (';' === $token || '{' === $token) {
+                $isNamespace = false;
+            }
+
+            if (T_CLASS === $token[0]) {
+                $class     = $tokens[array_search($token, $tokens, true) + 2][1];
+                $classes[] = trim(ltrim("{$namespace}\\{$class}", '\\'));
+            }
+        }
+
+        return $classes;
+    }
+
+    /**
+     * getClassesInNamespace.
+     *
+     * @param mixed $namespace
+     */
     public static function getClassesInNamespace($namespace)
     {
+        // $allClasses       = get_declared_classes();
+        // $namespaceClasses = array_filter($allClasses, static fn ($class) => Str::startsWith($class, $componentNamespace));
         $composerFile = base_path('vendor/composer/autoload_classmap.php');
         if (!file_exists($composerFile)) {
-            return[];
+            return Collection::wrap([]);
 
             throw new \Exception('Autoload file not found.');
         }
         $namespaces = require $composerFile;
         $classes    = array_keys(array_filter($namespaces, static fn ($path, $class) => str_starts_with($class, $namespace), ARRAY_FILTER_USE_BOTH));
 
-        return $classes;
-    }
-
-    public static function getClassesInDirectory($path)
-    {
-        if ((new \SplFileInfo(self::path($path, '/config/config.php')))->isFile()) {
-            $this->publishes([self::path($package, 'config/config.php') => config_path($code . '.php')], 'config');
-            $this->mergeConfigFrom(self::path($package, 'config/config.php'), $code);
-        }
-
-        // Tự động quét thư mục Livewire components
-        $componentPath = __DIR__ . '/../resources/views/livewire';
-
-        if (is_dir($path)) {
-            foreach (glob($path . '/*.php') as $file) {
-                $componentName = basename($file, '.php');
-                Livewire::component($componentName, "Vendor\\PackageName\\Http\\Livewire\\{$componentName}");
-            }
-        }
-
-        return $classes;
+        return Collection::wrap($classes);
     }
 }
