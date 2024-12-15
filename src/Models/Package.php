@@ -8,7 +8,7 @@ declare(strict_types=1);
  * @author     Tran Ngoc Duc <ductn@diepxuan.com>
  * @author     Tran Ngoc Duc <caothu91@gmail.com>
  *
- * @lastupdate 2024-12-13 13:46:14
+ * @lastupdate 2024-12-15 12:15:59
  */
 
 namespace Diepxuan\Core\Models;
@@ -92,16 +92,16 @@ class Package
         $componentNamespace = "{$namespace}\\Http\\Livewire";
 
         self::getClassesInNamespace("{$namespace}\\Http\\Livewire")
-            ->map(static function (string $component) use ($package): void {
+            ->concat(self::getClassesInDirectory($package_name, '/Http/Livewire'))
+            ->unique()
+            ->values()
+            ->map(static function (string $component) use ($package) {
                 $componentName = Str::kebab(class_basename($component));
                 Livewire::component("{$package}::{$componentName}", $component);
+
+                return "{$package}::{$componentName}";
             })
-        ;
-        self::getClassesInDirectory($package_name, '/Http/Livewire')
-            ->map(static function (string $component) use ($package): void {
-                $componentName = Str::kebab(class_basename($component));
-                Livewire::component("{$package}::{$componentName}", $component);
-            })
+            // ->dd()
         ;
     }
 
