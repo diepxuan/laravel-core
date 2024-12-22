@@ -8,7 +8,7 @@ declare(strict_types=1);
  * @author     Tran Ngoc Duc <ductn@diepxuan.com>
  * @author     Tran Ngoc Duc <caothu91@gmail.com>
  *
- * @lastupdate 2024-12-15 12:15:59
+ * @lastupdate 2024-12-18 20:52:12
  */
 
 namespace Diepxuan\Core\Models;
@@ -17,6 +17,7 @@ use Composer\InstalledVersions as ComposerPackage;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Livewire\Livewire;
+use Symfony\Component\Finder\Finder;
 
 class Package
 {
@@ -93,15 +94,17 @@ class Package
 
         self::getClassesInNamespace("{$namespace}\\Http\\Livewire")
             ->concat(self::getClassesInDirectory($package_name, '/Http/Livewire'))
-            ->unique()
             ->values()
+            ->unique()
             ->map(static function (string $component) use ($package) {
-                $componentName = Str::kebab(class_basename($component));
+                $componentName = Str::of($component)->after('\Http\Livewire\\')
+                    ->kebab('\\')
+                    ->replace('\-', '.')
+                ;
                 Livewire::component("{$package}::{$componentName}", $component);
 
                 return "{$package}::{$componentName}";
             })
-            // ->dd()
         ;
     }
 
@@ -121,11 +124,16 @@ class Package
             return Collection::wrap([]);
         }
 
-        return Collection::wrap(glob($path . '/*.php'))
-            ->map(static fn (string $file): \SplFileInfo => new \SplFileInfo($file))
+        $finder = new Finder();
+        $finder->files()->in($path)->name('*.php');
+
+        return Collection::wrap(iterator_to_array($finder))
             ->filter(static fn (\SplFileInfo $file) => $file->isFile())
             ->map(static fn (\SplFileInfo $file) => self::getClassesInFile($file->getRealPath()))
+            ->values()
+            ->unique()
             ->flatten()
+            // ->dd()
         ;
     }
 
