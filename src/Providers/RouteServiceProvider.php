@@ -8,7 +8,7 @@ declare(strict_types=1);
  * @author     Tran Ngoc Duc <ductn@diepxuan.com>
  * @author     Tran Ngoc Duc <caothu91@gmail.com>
  *
- * @lastupdate 2024-12-12 10:50:37
+ * @lastupdate 2025-04-01 08:13:40
  */
 
 namespace Diepxuan\Core\Providers;
@@ -39,7 +39,7 @@ class RouteServiceProvider extends ServiceProvider
                 Route::middleware('web')->group($file);
             }
             if ((new \SplFileInfo($file = Package::path($package, '/routes/api.php')))->isFile()) {
-                Route::middleware('api')->group($file);
+                Route::middleware('api')->prefix('api')->group($file);
             }
 
             // Lấy tất cả các file phù hợp với pattern
