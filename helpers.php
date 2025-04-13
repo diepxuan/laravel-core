@@ -8,47 +8,21 @@ declare(strict_types=1);
  * @author     Tran Ngoc Duc <ductn@diepxuan.com>
  * @author     Tran Ngoc Duc <caothu91@gmail.com>
  *
- * @lastupdate 2024-07-04 16:38:12
+ * @lastupdate 2025-04-13 15:38:04
  */
 
-use Composer\InstalledVersions as ComposerPackage;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
-
-if (!function_exists('module_path')) {
-    function module_path($package_name, $path = null)
-    {
-        $packagePath = ComposerPackage::getInstallPath($package_name);
-        $packagePath = $packagePath ?: base_path($package_name);
-        $packagePath = new SplFileInfo($packagePath);
-        $packagePath = $packagePath->isDir() ? $packagePath : new SplFileInfo(__DIR__ . '/../');
-
-        if ($path) {
-            $path        = explode(DIRECTORY_SEPARATOR, trim($path, DIRECTORY_SEPARATOR));
-            $packagePath = explode(DIRECTORY_SEPARATOR, $packagePath->getRealPath());
-            $packagePath = array_merge($packagePath, $path);
-
-            return implode(DIRECTORY_SEPARATOR, $packagePath);
-        }
-
-        return $packagePath->getRealPath();
-    }
-}
-
-if (!function_exists('module_packages')) {
+if (!function_exists('maskKey')) {
     /**
-     * List packages.
+     * Mask a key with asterisks, leaving the last $visible characters visible.
+     *
+     * @param string $key
+     * @param int    $visible
+     * @param string $mask
+     *
+     * @return string
      */
-    function module_packages(): Collection
+    function maskKey($key, $visible = 4, $mask = '*')
     {
-        return Collection::wrap(ComposerPackage::getInstalledPackages())
-            ->where(static fn (string $package) => Str::of($package)
-                ->startsWith('diepxuan'))
-            ->where(static fn (string $package) => !Str::of($package)
-                ->is(ComposerPackage::getRootPackage()['name']))
-            ->mapWithKeys(static fn (string $package, int $key) => [
-                Str::of($package)->afterLast('/')->after('-')->toString() => $package,
-            ])
-        ;
+        return str_repeat($mask, max(0, strlen($key) - $visible)) . substr($key, -$visible);
     }
 }
