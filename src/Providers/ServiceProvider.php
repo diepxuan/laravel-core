@@ -8,19 +8,17 @@ declare(strict_types=1);
  * @author     Tran Ngoc Duc <ductn@diepxuan.com>
  * @author     Tran Ngoc Duc <caothu91@gmail.com>
  *
- * @lastupdate 2024-12-12 22:16:38
+ * @lastupdate 2025-04-22 15:19:46
  */
 
 namespace Diepxuan\Core\Providers;
 
 use Diepxuan\Core\Models\Package;
-use Illuminate\Support\Collection;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\ServiceProvider as BaseServiceProvider;
 
 class ServiceProvider extends BaseServiceProvider
 {
-    protected $packages;
-
     /**
      * Bootstrap the application services.
      */
@@ -60,24 +58,24 @@ class ServiceProvider extends BaseServiceProvider
     }
 
     /**
-     * List packages.
-     */
-    protected function packages(): Collection
-    {
-        if ($this->packages) {
-            return $this->packages;
-        }
-        $this->packages = Package::list();
-
-        return $this->packages;
-    }
-
-    /**
      * Register Commands.
      */
     protected function registerCommands()
     {
-        $this->commands([]);
+        if (!$this->app->runningInConsole()) {
+            return $this;
+        }
+
+        $this->commands(
+            Package::list()
+                ->map(static function (string $package, string $code) {
+                    // @todo: check if package has command
+                    return Package::getCommands($code);
+                })
+                ->flatten()
+                ->filter()
+                ->toArray() // @todo: filter out empty commands
+        );
 
         return $this;
     }
@@ -87,10 +85,26 @@ class ServiceProvider extends BaseServiceProvider
      */
     protected function registerCommandSchedules()
     {
-        // $this->app->booted(function () {
-        //     $schedule = $this->app->make(Schedule::class);
-        //     $schedule->command('inspire')->hourly();
-        // });
+        $this->app->booted(function (): void {
+            $schedule = $this->app->make(Schedule::class);
+
+            Package::list()
+                ->map(static function (string $package, string $code) {
+                    // @todo: check if package has command
+                    return Package::getCommands($code);
+                })
+                ->flatten()
+                ->filter()
+                ->each(static function (string $command) use ($schedule): void {
+                    if (method_exists($command, 'schedule') && \is_callable([$command, 'schedule'])) {
+                        $command::schedule($schedule);
+                    }
+                })
+            ;
+
+            // schedule
+            // $schedule->command('inspire')->hourly();
+        });
 
         return $this;
     }

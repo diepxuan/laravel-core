@@ -8,12 +8,13 @@ declare(strict_types=1);
  * @author     Tran Ngoc Duc <ductn@diepxuan.com>
  * @author     Tran Ngoc Duc <caothu91@gmail.com>
  *
- * @lastupdate 2024-12-18 20:52:12
+ * @lastupdate 2025-04-21 09:48:56
  */
 
 namespace Diepxuan\Core\Models;
 
 use Composer\InstalledVersions as ComposerPackage;
+use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Livewire\Livewire;
@@ -105,6 +106,22 @@ class Package
 
                 return "{$package}::{$componentName}";
             })
+        ;
+    }
+
+    /**
+     * @param mixed $package
+     */
+    public static function getCommands($package)
+    {
+        $namespace    = config("{$package}.namespace");
+        $package_name = config("{$package}.name");
+
+        return self::getClassesInNamespace("{$namespace}\\Commands")
+            ->concat(self::getClassesInDirectory($package_name, '/Commands'))
+            ->values()
+            ->unique()
+            ->filter(static fn ($class) => is_subclass_of($class, Command::class))
         ;
     }
 
