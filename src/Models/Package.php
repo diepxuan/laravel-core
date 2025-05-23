@@ -8,7 +8,7 @@ declare(strict_types=1);
  * @author     Tran Ngoc Duc <ductn@diepxuan.com>
  * @author     Tran Ngoc Duc <caothu91@gmail.com>
  *
- * @lastupdate 2025-04-21 09:48:56
+ * @lastupdate 2025-05-22 23:25:38
  */
 
 namespace Diepxuan\Core\Models;
@@ -16,6 +16,8 @@ namespace Diepxuan\Core\Models;
 use Composer\InstalledVersions as ComposerPackage;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Livewire\Livewire;
 use Symfony\Component\Finder\Finder;
@@ -89,9 +91,8 @@ class Package
      */
     public static function livewireComponentNamespace($package): void
     {
-        $namespace          = config("{$package}.namespace");
-        $package_name       = config("{$package}.name");
-        $componentNamespace = "{$namespace}\\Http\\Livewire";
+        $namespace    = config("{$package}.namespace");
+        $package_name = config("{$package}.name");
 
         self::getClassesInNamespace("{$namespace}\\Http\\Livewire")
             ->concat(self::getClassesInDirectory($package_name, '/Http/Livewire'))
@@ -104,9 +105,61 @@ class Package
                 ;
                 Livewire::component("{$package}::{$componentName}", $component);
 
-                return "{$package}::{$componentName}";
+                return "{$package}::{$componentName} -> {$component}";
             })
+            // ->dd()
         ;
+    }
+
+    /**
+     * bladeComponentNamespace.
+     *
+     * @param mixed $package
+     */
+    public static function bladeComponentNamespace($package): void
+    {
+        $namespace          = config("{$package}.namespace");
+        $package_name       = config("{$package}.name");
+        $componentNamespace = "{$namespace}\\View\\Components";
+
+        // Blade::componentNamespace("{$namespace}\\View\\Components", $package_name);
+
+        self::getClassesInNamespace($componentNamespace)
+            ->concat(self::getClassesInDirectory($package_name, '/View/Components'))
+            ->values()
+            ->unique()
+            ->mapWithKeys(static function ($component) use ($componentNamespace) {
+                $componentName = Str::of($component)->after("{$componentNamespace}\\")
+                    ->kebab('\\')
+                    ->replace('\-', '.')
+                    ->toString()
+                ;
+
+                return [$componentName => $component];
+                // return [$componentName => "{$package}::components.{$componentName}"];
+            })
+            // ->dd()
+            ->each(static function ($component, $componentName): void {
+                // Blade::component('catalog::components.button', 'button');
+                Blade::component($componentName, $component);
+            })
+            // ->dd()
+        ;
+
+        if ($package_name && File::isDirectory($componentsPath = self::path($package_name, 'resources/views/components'))) {
+            collect(File::allFiles($componentsPath))
+                ->filter(static fn ($component) => Str::endsWith($component->getFilename(), '.blade.php'))
+                ->map(static fn ($component) => Str::after($component, $componentsPath . \DIRECTORY_SEPARATOR))
+                ->map(static fn ($component) => Str::before($component, '.blade.php'))
+                ->map(static fn ($component) => Str::replace(\DIRECTORY_SEPARATOR, '.', $component))
+                ->mapWithKeys(static fn ($component, $key) => [$component => "{$package}::components.{$component}"])
+                ->each(static function ($component, $alias): void {
+                    // Blade::component('catalog::components.button', 'button');
+                    Blade::component($component, $alias);
+                })
+                // ->dd()
+            ;
+        }
     }
 
     /**
