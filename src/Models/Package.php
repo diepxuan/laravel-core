@@ -8,7 +8,7 @@ declare(strict_types=1);
  * @author     Tran Ngoc Duc <ductn@diepxuan.com>
  * @author     Tran Ngoc Duc <caothu91@gmail.com>
  *
- * @lastupdate 2025-05-22 23:25:38
+ * @lastupdate 2025-05-31 13:42:45
  */
 
 namespace Diepxuan\Core\Models;
@@ -82,6 +82,20 @@ class Package
         }
 
         return $packagePath->getRealPath();
+    }
+
+    public static function resource_path(string $package, $path = null): string
+    {
+        $packagePath = static::path($package, 'resources');
+        if ($path) {
+            $path        = explode(\DIRECTORY_SEPARATOR, trim($path, \DIRECTORY_SEPARATOR));
+            $packagePath = explode(\DIRECTORY_SEPARATOR, $packagePath);
+            $packagePath = array_merge($packagePath, $path);
+
+            return implode(\DIRECTORY_SEPARATOR, $packagePath);
+        }
+
+        return $packagePath;
     }
 
     /**

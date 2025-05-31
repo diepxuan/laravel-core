@@ -8,7 +8,7 @@ declare(strict_types=1);
  * @author     Tran Ngoc Duc <ductn@diepxuan.com>
  * @author     Tran Ngoc Duc <caothu91@gmail.com>
  *
- * @lastupdate 2025-04-22 15:20:54
+ * @lastupdate 2025-05-31 13:47:02
  */
 
 namespace Diepxuan\Core\Providers;
@@ -34,14 +34,15 @@ class TranslationServiceProvider extends ServiceProvider
     public function register(): void
     {
         Package::list()->map(function (string $package, string $code): void {
-            $langPath = resource_path('lang/modules/' . $code);
-
-            if (is_dir($langPath)) {
+            if (is_dir($langPath = resource_path('lang/modules/' . $code))) {
+                $this->loadTranslationsFrom($langPath);
                 $this->loadTranslationsFrom($langPath, $code);
                 $this->loadJsonTranslationsFrom($langPath);
-            } else {
-                $this->loadTranslationsFrom(Package::path($package, 'lang'), $code);
-                $this->loadJsonTranslationsFrom(Package::path($package, 'lang'));
+            }
+            if (is_dir($langPath = Package::resource_path($package, 'lang'))) {
+                $this->loadTranslationsFrom($langPath);
+                $this->loadTranslationsFrom($langPath, $code);
+                $this->loadJsonTranslationsFrom($langPath);
             }
         });
     }
