@@ -34,9 +34,19 @@ class ConfigServiceProvider extends ServiceProvider
     public function register(): void
     {
         Package::list()->map(function (string $package, string $code): void {
-            if ((new \SplFileInfo(Package::path($package, '/config/config.php')))->isFile()) {
-                $this->publishes([Package::path($package, 'config/config.php') => config_path($code . '.php')], 'config');
-                $this->mergeConfigFrom(Package::path($package, 'config/config.php'), $code);
+            // Try to load config file with package name first (new convention)
+            $configFile = Package::path($package, "/config/{$code}.php");
+            $configFileInfo = new \SplFileInfo($configFile);
+            
+            // Fallback to config.php for backward compatibility
+            if (!$configFileInfo->isFile()) {
+                $configFile = Package::path($package, '/config/config.php');
+                $configFileInfo = new \SplFileInfo($configFile);
+            }
+            
+            if ($configFileInfo->isFile()) {
+                $this->publishes([$configFile => config_path($code . '.php')], 'config');
+                $this->mergeConfigFrom($configFile, $code);
             }
         });
     }
