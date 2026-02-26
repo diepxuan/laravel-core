@@ -8,12 +8,13 @@ declare(strict_types=1);
  * @author     Tran Ngoc Duc <ductn@diepxuan.com>
  * @author     Tran Ngoc Duc <caothu91@gmail.com>
  *
- * @lastupdate 2024-07-04 09:25:50
+ * @lastupdate 2026-02-26 23:11:06
  */
 
 namespace Diepxuan\Core\Http;
 
 use Diepxuan\Core\Http\Middleware\ClearCache;
+use Diepxuan\Core\Http\Middleware\TrustProxies;
 
 class Kernel
 {
@@ -25,7 +26,7 @@ class Kernel
      * @var array<int, class-string|string>
      */
     protected $middleware = [
-        // \App\Http\Middleware\TrustHosts::class,
+        TrustProxies::class,
     ];
 
     /**
@@ -68,6 +69,9 @@ class Kernel
     {
         foreach ($this->middlewareAliases as $alias => $middleware) {
             app()->make('router')->aliasMiddleware($alias, $middleware);
+        }
+        foreach ($this->middleware as $middleware) {
+            app()->make(\Illuminate\Contracts\Http\Kernel::class)->pushMiddleware($middleware);
         }
     }
 }
