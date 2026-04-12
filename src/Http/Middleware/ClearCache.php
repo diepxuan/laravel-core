@@ -8,13 +8,12 @@ declare(strict_types=1);
  * @author     Tran Ngoc Duc <ductn@diepxuan.com>
  * @author     Tran Ngoc Duc <caothu91@gmail.com>
  *
- * @lastupdate 2024-07-04 09:25:57
+ * @lastupdate 2026-04-12 16:59:26
  */
 
 namespace Diepxuan\Core\Http\Middleware;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 
 class ClearCache
@@ -28,11 +27,19 @@ class ClearCache
      */
     public function handle($request, \Closure $next)
     {
-        if (!\in_array(config('app.env'), ['production', 'staging'], true)) {
-            // Artisan::call("cache:clear");
-            // Artisan::call("view:clear");
-            // Artisan::call("route:clear");
+        if (!app()->environment('production', 'staging')) {
+            // Xóa cache ứng dụng trực tiếp, nhanh hơn Artisan::call
             Cache::flush();
+
+            // Xóa cache route nếu có
+            if (file_exists($routesPath = app()->getCachedRoutesPath())) {
+                app('files')->delete($routesPath);
+            }
+
+            // Xóa cache view
+            if ($viewCompiledPath = config('view.compiled')) {
+                app('files')->cleanDirectory($viewCompiledPath);
+            }
         }
 
         return $next($request);
