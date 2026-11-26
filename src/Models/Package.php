@@ -239,21 +239,61 @@ class Package
         $class       = '';
         $isNamespace = false;
 
-        foreach ($tokens as $token) {
+        // Duyet token theo INDEX (khong dung array_search tren gia tri token) de
+        // tranh loi "Uninitialized string offset" khi gap `abstract class`,
+        // `final class`, `readonly class`: sau T_CLASS co the la T_WHITESPACE roi
+        // moi toi T_STRING, va token co the la string (khong phai array).
+        $count = \count($tokens);
+
+        for ($i = 0; $i < $count; $i++) {
+            $token = $tokens[$i];
+
             if ($isNamespace && \is_array($token)) {
                 $namespace .= $token[1];
+            }
+
+            if (!\is_array($token)) {
+                if (';' === $token || '{' === $token) {
+                    $isNamespace = false;
+                }
+
+                continue;
             }
 
             if (T_NAMESPACE === $token[0]) {
                 $namespace   = '';
                 $isNamespace = true;
-            } elseif (';' === $token || '{' === $token) {
-                $isNamespace = false;
+
+                continue;
             }
 
-            if (T_CLASS === $token[0]) {
-                $class     = $tokens[array_search($token, $tokens, true) + 2][1];
-                $classes[] = trim(ltrim("{$namespace}\\{$class}", '\\'));
+            if (T_CLASS !== $token[0]) {
+                continue;
+            }
+
+            // T_CLASS cung xuat hien trong `::class` va `new class` — chi nhan
+            // khai bao class that su (token truoc khong phai T_DOUBLE_COLON
+            // va phia sau co T_STRING).
+            $prev = $tokens[$i - 1] ?? null;
+            if (\is_array($prev) && T_DOUBLE_COLON === $prev[0]) {
+                continue;
+            }
+
+            for ($j = $i + 1; $j < $count; $j++) {
+                $next = $tokens[$j];
+                if (!\is_array($next)) {
+                    continue;
+                }
+
+                if (T_WHITESPACE === $next[0] || T_COMMENT === $next[0] || T_DOC_COMMENT === $next[0]) {
+                    continue;
+                }
+
+                if (T_STRING === $next[0]) {
+                    $classes[] = trim(ltrim("{$namespace}\\{$next[1]}", '\\'));
+                }
+
+                break;
             }
         }
 
